@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama de Casos de Uso - Olympus</title>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: white;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .uw {
+      padding: .5rem 0
+    }
+
+    .ubar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap
+    }
+
+    .ubtn {
+      font-size: 11px;
+      padding: 3px 10px;
+      border: 0.5px solid #2a3448;
+      border-radius: 6px;
+      background: #0d1117;
+      color: #94a3b8;
+      cursor: pointer
+    }
+
+    .ubtn:hover {
+      background: #1a2235
+    }
+
+    #ubox {
+      width: 100%;
+      overflow: auto;
+      max-height: 800px;
+      border-radius: 10px;
+      border: 0.5px solid #1a2235
+    }
+  </style>
+</head>
+
+<body>
+  <div class="uw">
+    <div class="ubar">
+      <button class="ubtn" id="bZI">+ Zoom</button>
+      <button class="ubtn" id="bZO">− Zoom</button>
+      <button class="ubtn" id="bZR">Resetear</button>
+      <span id="bZL" style="font-size:11px;color:#6b7280">100%</span>
+      <span style="font-size:11px;color:#6b7280">— desplaza para explorar el diagrama</span>
+    </div>
+    <div id="ubox">
+      <svg id="usvg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+  <script>
+    const W = 1900, H = 2120, BW = 380, HD = 34, ORX = 170, ORY = 13, OSTART = 58, OSTEP = 36;
+    const CX = [150, 550, 950, 1350];
+    const RH = [{ y: 40, h: 290 }, { y: 370, h: 360 }, { y: 770, h: 290 }, { y: 1100, h: 290 }, { y: 1430, h: 260 }, { y: 1720, h: 260 }];
+
+    // ACTORES: Usuario (izq), Administrador (der-abajo)
+    // IA ya NO es actor — es sistema externo <<exclude>> (tercero)
+    const ACT = {
+      u: { x: 62, y: 800, col: '#60a5fa', lbl: ['USUARIO'] },
+      a: { x: 1842, y: 1700, col: '#34d399', lbl: ['ADMINIS-', 'TRADOR'] }
+    };
+
+    // IA como sistema externo <<exclude>>: caja rectangular en zona derecha
+    const IA_BOX = { x: 1762, y: 200, w: 120, h: 280, col: '#7c3aed' };
+
+    const MODS = [
+      // FILA 0 — Pilares 1-4
+      {
+        r: 0, c: 0, l1: '1. Rutinas Personalizadas', l2: null, hc: '#7c3aed', ac: ['u'], ia: true,
+        uc: ['Generar rutina por objetivo', 'Por equipamiento disponible', 'Según nivel calculado', 'Según días disponibles', '<<ext>> Adaptar fase menstrual']
+      },
+      {
+        r: 0, c: 1, l1: '2. Consciencia Ciclo', l2: 'Menstrual', hc: '#db2777', ac: ['u'],
+        uc: ['Notificaciones por fase', 'Protección racha automática', 'Bonus XP fase menstrual', 'Ajuste expectativas por fase']
+      },
+      {
+        r: 0, c: 2, l1: '3. Multi-Deporte', l2: '+ Wearables', hc: '#0891b2', ac: ['u'],
+        uc: ['Natación / Ciclismo / Running', 'Escalada / Gym', 'Sync Health Connect Android', 'Sync Apple HealthKit iOS', 'Día completado desde reloj']
+      },
+      {
+        r: 0, c: 3, l1: '4. Gamificación', l2: 'Inteligente', hc: '#d97706', ac: ['u'],
+        uc: ['Sistema de XP', 'Racha inteligente', 'Logros / Hitos', 'Niveles y Rangos', 'Retos semanales rotativos', 'Moneda In-App (mes 5+)']
+      },
+
+      // FILA 1 — Pilar 5 + Módulos 01-03
+      {
+        r: 1, c: 0, l1: '5. ChatBot Olympus', l2: 'Flotante Global', hc: '#2563eb', ac: ['u'], ia: true,
+        uc: ['Botón flotante global', 'Voz bidireccional STT/TTS', 'Sin memoria entre sesiones', 'Contexto de pantalla activa', 'Registro entrenamiento voz', 'Instrucciones en entrenamiento']
+      },
+      {
+        r: 1, c: 1, l1: '01. Autenticación', l2: 'y Perfil', hc: '#374151', ac: ['u'],
+        uc: ['Registrarse en la aplicación', 'Iniciar sesión', '<<incl>> Google / Apple', 'Recuperar contraseña', 'Cerrar sesión']
+      },
+      {
+        r: 1, c: 2, l1: '02. Onboarding', l2: null, hc: '#374151', ac: ['u'],
+        uc: ['Sexo / Peso / Altura', 'Objetivo de entrenamiento', 'Equipamiento disponible', 'Cuestionario de nivel (5 preg)', 'Deportes adicionales', 'Días disponibles', '<<ext>> Registro menstrual', 'Confirmación del perfil']
+      },
+      {
+        r: 1, c: 3, l1: '03. Dashboard', l2: null, hc: '#6d28d9', ac: ['u'],
+        uc: ['Racha semanal visual', 'Rutina del día', 'Retos activos', 'XP y nivel', '<<ext>> Notif. menstrual']
+      },
+
+      // FILA 2 — Módulos 04-07
+      {
+        r: 2, c: 0, l1: '04. Gestión', l2: 'de Rutinas', hc: '#15803d', ac: ['u'],
+        uc: ['Rutinas generadas por perfil', 'Crear rutina personalizada', 'Configurar series/reps/peso', 'Editar / Eliminar rutina', 'Guardar como plantilla']
+      },
+      {
+        r: 2, c: 1, l1: '05. Ejecución', l2: 'de Rutinas', hc: '#15803d', ac: ['u'], ia: true,
+        uc: ['Ver instrucciones ejercicio', 'Registrar series y peso', '<<cx>> Registrar por voz', '<<cx>> Instrucciones voz (IA)', 'Ver técnica del ejercicio', 'Pausar / Finalizar rutina']
+      },
+      {
+        r: 2, c: 2, l1: '06. Seguimiento', l2: 'y Progreso', hc: '#1d4ed8', ac: ['u'],
+        uc: ['Evolución de peso', 'Gráficas de volumen', 'Historial de entrenamientos', 'Deportes trackeados', 'Récords personales', 'Descargar reporte']
+      },
+      {
+        r: 2, c: 3, l1: '07. Nutrición', l2: 'y Salud', hc: '#374151', ac: ['u'],
+        uc: ['Recomendaciones nutricionales', 'Control de hidratación']
+      },
+
+      // FILA 3 — Módulos 08-10 + Definición Rutina H/M
+      {
+        r: 3, c: 0, l1: '08. Ciclo Menstrual', l2: '(usuario)', hc: '#be185d', ac: ['u'],
+        uc: ['Registrar ciclo', 'Ver fases del ciclo', 'Notificaciones por fase', '<<cx>> ChatBot conoce fase']
+      },
+      {
+        r: 3, c: 1, l1: '09. Comunidad', l2: 'y Motivación', hc: '#374151', ac: ['u'],
+        uc: ['Ver logros y medallas', 'Desafíos personales', 'Publicaciones y reseñas', 'Grupos y desafíos']
+      },
+      {
+        r: 3, c: 2, l1: '10. Notificaciones', l2: null, hc: '#374151', ac: ['u'],
+        uc: ['Recordatorios de entreno', 'Recordatorios hidratación', 'Notificaciones de racha', '<<ext>> Notif. ciclo menstrual', 'Config. notificaciones']
+      },
+      // NUEVO: Definición Rutina H/M — misma lógica, solo difiere notif. menstrual
+      {
+        r: 3, c: 3, l1: '★ Definición Rutina', l2: 'Hombre / Mujer', hc: '#7c3aed', ac: ['u'], ia: true,
+        uc: ['Base idéntica H y M', 'Objetivo / Equipamiento / Nivel', 'Días disponibles / Volumen', '<<ext>> Solo Mujer: ciclo adapt.', '<<ext>> Solo Mujer: notif. mens.']
+      },
+
+      // FILA 4 — Gestión Administrativa
+      {
+        r: 4, c: 0, l1: '11. Gestión', l2: 'de Usuarios', hc: '#065f46', ac: ['a'],
+        uc: ['Ver usuarios registrados', 'Ver estadísticas de uso', 'Ver historial de actividad', 'Gestionar roles y permisos']
+      },
+      {
+        r: 4, c: 1, l1: '12. Gestión', l2: 'de Contenido', hc: '#065f46', ac: ['a'],
+        uc: ['Tab: Ejercicios', 'Tab: Rutinas', 'Tab: Nutrición', 'Videos y consejos', 'Categorías y etiquetas']
+      },
+      {
+        r: 4, c: 2, l1: '13. Gestión', l2: 'ChatBot / IA', hc: '#065f46', ac: ['a'], ia: true,
+        uc: ['Base de respuestas', 'Configurar STT / TTS', 'Contextos por pantalla', 'Ajustar modelo de IA', 'Métricas de uso']
+      },
+      {
+        r: 4, c: 3, l1: '14. Config.', l2: 'del Sistema', hc: '#065f46', ac: ['a'],
+        uc: ['Configuración general', 'Parámetros del sistema', 'Copias de seguridad', 'Monitoreo del sistema', 'Auditoría de actividades']
+      },
+
+      // FILA 5 — Gamificación Administrativa
+      {
+        r: 5, c: 0, l1: '15. Gestión', l2: 'de Retos', hc: '#065f46', ac: ['a'],
+        uc: ['Ver 4 métricas resumen', 'Ver tabla resumen de retos', 'Ver tarjetas de retos activos', 'Otorgar XP / Recompensas']
+      },
+    ];
+
+    function dFig(x, y, col, lbl) {
+      let s = `<circle cx="${x}" cy="${y - 30}" r="11" fill="none" stroke="${col}" stroke-width="1.8"/>`;
+      s += `<line x1="${x}" y1="${y - 19}" x2="${x}" y2="${y + 5}" stroke="${col}" stroke-width="1.8"/>`;
+      s += `<line x1="${x}" y1="${y - 10}" x2="${x - 16}" y2="${y + 5}" stroke="${col}" stroke-width="1.8"/>`;
+      s += `<line x1="${x}" y1="${y - 10}" x2="${x + 16}" y2="${y + 5}" stroke="${col}" stroke-width="1.8"/>`;
+      s += `<line x1="${x}" y1="${y + 5}" x2="${x - 13}" y2="${y + 26}" stroke="${col}" stroke-width="1.8"/>`;
+      s += `<line x1="${x}" y1="${y + 5}" x2="${x + 13}" y2="${y + 26}" stroke="${col}" stroke-width="1.8"/>`;
+      lbl.forEach((l, i) => { s += `<text x="${x}" y="${y + 42 + i * 14}" text-anchor="middle" fill="${col}" font-size="11" font-weight="600" font-family="sans-serif">${l}</text>`; });
+      return s;
+    }
+
+    // IA como sistema externo <<exclude>> — caja rectangular UML
+    function dIABox() {
+      const b = IA_BOX, mx = b.x + b.w / 2;
+      let s = '';
+      // Shadow/glow
+      s += `<rect x="${b.x - 3}" y="${b.y - 3}" width="${b.w + 6}" height="${b.h + 6}" rx="7" fill="none" stroke="${b.col}" stroke-width="0.5" stroke-opacity="0.18"/>`;
+      // Outer box (dashed = external boundary in UML)
+      s += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="5" fill="#0e0a1a" stroke="${b.col}" stroke-width="1.2" stroke-dasharray="6,3" stroke-opacity="0.8"/>`;
+      // Header stripe
+      s += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="22" rx="5" fill="${b.col}" fill-opacity="0.18"/>`;
+      s += `<rect x="${b.x}" y="${b.y + 17}" width="${b.w}" height="5" fill="${b.col}" fill-opacity="0.18"/>`;
+      // Stereotype
+      s += `<text x="${mx}" y="${b.y + 11}" text-anchor="middle" dominant-baseline="central" fill="${b.col}" font-size="8.5" font-family="sans-serif" letter-spacing="0.5">«exclude»</text>`;
+      // Icon
+      s += `<text x="${mx}" y="${b.y + 46}" text-anchor="middle" font-size="20" font-family="sans-serif">🤖</text>`;
+      // Name
+      s += `<text x="${mx}" y="${b.y + 72}" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="700" font-family="sans-serif">IA</text>`;
+      s += `<text x="${mx}" y="${b.y + 86}" text-anchor="middle" fill="#c4b5fd" font-size="10" font-family="sans-serif">Sistema</text>`;
+      s += `<text x="${mx}" y="${b.y + 98}" text-anchor="middle" fill="#c4b5fd" font-size="10" font-family="sans-serif">Externo</text>`;
+      // Divider
+      s += `<line x1="${b.x + 10}" y1="${b.y + 108}" x2="${b.x + b.w - 10}" y2="${b.y + 108}" stroke="${b.col}" stroke-width="0.5" stroke-opacity="0.35"/>`;
+      // Capabilities
+      const caps = ['Genera rutinas', 'Responde ChatBot', 'Instrucciones voz', 'Adapta al ciclo'];
+      caps.forEach((c, i) => {
+        s += `<text x="${mx}" y="${b.y + 122 + i * 20}" text-anchor="middle" dominant-baseline="central" fill="#a78bfa" font-size="8.5" font-family="sans-serif" opacity="0.85">${c}</text>`;
+      });
+      // Footer label
+      s += `<text x="${mx}" y="${b.y + b.h - 8}" text-anchor="middle" fill="${b.col}" font-size="7.5" font-family="sans-serif" opacity="0.5" letter-spacing="0.5">TERCERO</text>`;
+      return s;
+    }
+
+    function dBox(m) {
+      const bx = CX[m.c], by = RH[m.r].y, bh = RH[m.r].h, mx = bx + BW / 2;
+      const AL = { u: '#93c5fd', a: '#6ee7b7' };
+      // Special highlight for the new H/M module
+      const isNew = m.l1.startsWith('★');
+      let s = `<rect x="${bx}" y="${by}" width="${BW}" height="${bh}" rx="4" fill="${isNew ? '#130d1f' : '#111827'}" stroke="${m.hc}" stroke-width="${isNew ? 1.5 : 0.8}" stroke-opacity="${isNew ? 0.9 : 0.55}"/>`;
+      if (isNew) {
+        s += `<rect x="${bx - 1}" y="${by - 1}" width="${BW + 2}" height="${bh + 2}" rx="5" fill="none" stroke="${m.hc}" stroke-width="0.5" stroke-opacity="0.3"/>`;
+      }
+      s += `<rect x="${bx}" y="${by}" width="${BW}" height="${HD}" rx="4" fill="${m.hc}"/>`;
+      s += `<rect x="${bx}" y="${by + HD - 5}" width="${BW}" height="5" fill="${m.hc}"/>`;
+      if (m.l2) {
+        s += `<text x="${mx}" y="${by + HD / 2 - 5}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="11" font-weight="500" font-family="sans-serif">${m.l1}</text>`;
+        s += `<text x="${mx}" y="${by + HD / 2 + 8}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="11" font-weight="500" font-family="sans-serif">${m.l2}</text>`;
+      } else {
+        s += `<text x="${mx}" y="${by + HD / 2 + 1}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="${m.l1.length > 22 ? 11 : 12}" font-weight="500" font-family="sans-serif">${m.l1}</text>`;
+      }
+      // Actor dots — user and admin only; IA shown as dashed diamond
+      m.ac.forEach((id, i) => { s += `<circle cx="${bx + BW - 12 - i * 14}" cy="${by + HD / 2}" r="5" fill="${AL[id]}"/>`; });
+      // IA indicator: small dashed diamond instead of dot
+      if (m.ia) {
+        const ix = bx + BW - 12 - m.ac.length * 14, iy = by + HD / 2;
+        s += `<polygon points="${ix},${iy - 5} ${ix + 5},${iy} ${ix},${iy + 5} ${ix - 5},${iy}" fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2,1"/>`;
+      }
+      m.uc.forEach((u, i) => {
+        const oy = by + OSTART + i * OSTEP;
+        const isSpecial = u.includes('Mujer');
+        s += `<ellipse cx="${mx}" cy="${oy}" rx="${ORX}" ry="${ORY}" fill="${isSpecial ? '#1a0a14' : 'none'}" stroke="${isSpecial ? '#be185d' : '#1e2d3d'}" stroke-width="${isSpecial ? 1.2 : 1}"/>`;
+
+        // Fix the HTML entities for <<ext>> etc back to < and > if needed, but in SVG text it's safer as &lt;
+        let uText = u.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        s += `<text x="${mx}" y="${oy}" text-anchor="middle" dominant-baseline="central" fill="${isSpecial ? '#f9a8d4' : '#94a3b8'}" font-size="10.5" font-family="sans-serif">${uText}</text>`;
+      });
+      return s;
+    }
+
+    function dLines() {
+      const SC = { u: '#3b82f6', a: '#10b981' };
+      let s = '';
+      MODS.forEach(m => {
+        const bx = CX[m.c], bcy = RH[m.r].y + RH[m.r].h / 2;
+        // Connections from human actors (solid lines)
+        m.ac.forEach(id => {
+          const a = ACT[id], lx = a.x < bx ? bx : bx + BW;
+          s += `<line x1="${a.x}" y1="${a.y}" x2="${lx}" y2="${bcy}" stroke="${SC[id]}" stroke-width="0.6" stroke-opacity="0.42"/>`;
+        });
+        // IA external system: dashed connection from IA box right edge
+        if (m.ia) {
+          const iaRx = IA_BOX.x; // left edge of IA box  
+          const iaCy = IA_BOX.y + IA_BOX.h / 2;
+          s += `<line x1="${iaRx}" y1="${iaCy}" x2="${bx + BW}" y2="${bcy}" stroke="#7c3aed" stroke-width="0.7" stroke-opacity="0.45" stroke-dasharray="6,3"/>`;
+        }
+      });
+      return s;
+    }
+
+    function dSectionLabels() {
+      const labels = [
+        { y: 40, h: 290, t: 'PILARES DEL PRODUCTO (1–4)' },
+        { y: 370, h: 360, t: 'PILAR 5 + MÓDULOS 01–03' },
+        { y: 770, h: 290, t: 'MÓDULOS 04–07' },
+        { y: 1100, h: 290, t: 'MÓDULOS 08–10 + DEF. RUTINA' },
+        { y: 1430, h: 260, t: 'GESTIÓN ADMINISTRATIVA 1' },
+        { y: 1720, h: 260, t: 'GESTIÓN ADMINISTRATIVA 2' }
+      ];
+      let s = '';
+      labels.forEach(l => {
+        const cy = l.y + l.h / 2;
+        s += `<text transform="rotate(-90,128,${cy})" x="128" y="${cy}" text-anchor="middle" fill="#1e2d3d" font-size="9" font-family="sans-serif" letter-spacing="1">${l.t}</text>`;
+      });
+      return s;
+    }
+
+    // Actor zone labels
+    function dActorZones() {
+      let s = '';
+      // Usuario zone bar
+      s += `<rect x="30" y="300" width="62" height="860" rx="3" fill="none" stroke="#3b82f6" stroke-width="0.4" stroke-opacity="0.2" stroke-dasharray="4,4"/>`;
+      s += `<text transform="rotate(-90,18,730)" x="18" y="730" text-anchor="middle" fill="#1e3a5f" font-size="8" font-family="sans-serif" letter-spacing="1">ACTOR: USUARIO</text>`;
+      // IA: zona delimitada con doble línea punteada para indicar sistema externo
+      s += `<rect x="1756" y="190" width="136" height="300" rx="5" fill="none" stroke="#7c3aed" stroke-width="0.8" stroke-opacity="0.3" stroke-dasharray="8,4"/>`;
+      s += `<rect x="1758" y="192" width="132" height="296" rx="4" fill="none" stroke="#7c3aed" stroke-width="0.3" stroke-opacity="0.15" stroke-dasharray="4,4"/>`;
+      s += `<text transform="rotate(90,1888,340)" x="1888" y="340" text-anchor="middle" fill="#3b1a6b" font-size="8" font-family="sans-serif" letter-spacing="1">SISTEMA EXTERNO «exclude»</text>`;
+      // Admin zone bar
+      s += `<rect x="1808" y="1390" width="62" height="590" rx="3" fill="none" stroke="#10b981" stroke-width="0.4" stroke-opacity="0.2" stroke-dasharray="4,4"/>`;
+      s += `<text transform="rotate(90,1882,1685)" x="1882" y="1685" text-anchor="middle" fill="#064e3b" font-size="8" font-family="sans-serif" letter-spacing="1">ACTOR: ADMIN</text>`;
+      return s;
+    }
+
+    const svg = document.getElementById('usvg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+
+    let h = `<rect width="${W}" height="${H}" fill="#0d1117"/>`;
+    // Subtle grid texture
+    h += `<defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0f1622" stroke-width="0.5"/></pattern></defs>`;
+    h += `<rect width="${W}" height="${H}" fill="url(#grid)"/>`;
+
+    // Title
+    h += `<text x="${W / 2}" y="14" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700" letter-spacing="5" font-family="sans-serif">OLYMPUS</text>`;
+    h += `<text x="${W / 2}" y="27" text-anchor="middle" fill="#374151" font-size="8.5" letter-spacing="1.5" font-family="sans-serif">DIAGRAMA DE CASOS DE USO v4.0 — ACTORES: USUARIO · ADMINISTRADOR · IA (Sistema Externo «exclude»)</text>`;
+
+    // Main border
+    h += `<rect x="138" y="35" width="1614" height="1958" rx="6" fill="none" stroke="#1a2235" stroke-width="1" stroke-dasharray="10,5"/>`;
+
+    h += dActorZones();
+    h += dSectionLabels();
+    h += dLines();
+    MODS.forEach(m => { h += dBox(m); });
+    // Only human actors as stick figures
+    Object.values(ACT).forEach(a => { h += dFig(a.x, a.y, a.col, a.lbl); });
+    // IA external system box
+    h += dIABox();
+
+    // Legend
+    const LY = 2008;
+    h += `<rect x="138" y="${LY - 6}" width="1614" height="100" rx="4" fill="#0a0f1a" stroke="#1a2235" stroke-width="0.5"/>`;
+    h += `<text x="155" y="${LY + 8}" fill="#374151" font-size="9" font-family="sans-serif">NOTAS:</text>`;
+    h += `<text x="207" y="${LY + 8}" fill="#6366f1" font-size="9" font-family="sans-serif">&lt;&lt;include&gt;&gt;:</text>`;
+    h += `<text x="282" y="${LY + 8}" fill="#4b5563" font-size="9" font-family="sans-serif">caso base siempre incluye al relacionado</text>`;
+    h += `<text x="600" y="${LY + 8}" fill="#6366f1" font-size="9" font-family="sans-serif">&lt;&lt;extend&gt;&gt;:</text>`;
+    h += `<text x="665" y="${LY + 8}" fill="#4b5563" font-size="9" font-family="sans-serif">extiende funcionalidad (opcional / condicional)</text>`;
+    h += `<text x="980" y="${LY + 8}" fill="#6366f1" font-size="9" font-family="sans-serif">&lt;&lt;cx&gt;&gt;:</text>`;
+    h += `<text x="1014" y="${LY + 8}" fill="#4b5563" font-size="9" font-family="sans-serif">conexión entre módulos del sistema</text>`;
+    h += `<text x="1270" y="${LY + 8}" fill="#a78bfa" font-size="9" font-family="sans-serif">◇ — —  relación con IA (sistema externo «exclude»)</text>`;
+
+    // Actor legend
+    [
+      { c: '#60a5fa', t: 'USUARIO: interactúa con todos los módulos funcionales (H y M comparten lógica base)' },
+      { c: '#34d399', t: 'ADMINISTRADOR: gestión de usuarios, contenido, configuración ChatBot/IA y sistema' },
+    ].forEach((a, i) => {
+      const ax = 155 + i * 750;
+      h += `<circle cx="${ax + 5}" cy="${LY + 35}" r="5" fill="${a.c}"/>`;
+      h += `<text x="${ax + 16}" y="${LY + 35}" dominant-baseline="central" fill="#6b7280" font-size="9" font-family="sans-serif">${a.t}</text>`;
+    });
+    // IA external system note
+    h += `<rect x="155+1500" y="${LY + 28}" width="10" height="10" rx="1" fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,1.5"/>`;
+    h += `<text x="1524" y="${LY + 35}" dominant-baseline="central" fill="#6b7280" font-size="9" font-family="sans-serif">IA «exclude»: Sistema externo/tercero — invocado condicionalmente (no actor interno)</text>`;
+
+    // H/M note
+    h += `<rect x="155" y="${LY + 50}" width="700" height="14" rx="2" fill="#0f1a10" stroke="#be185d" stroke-width="0.4" stroke-opacity="0.5"/>`;
+    h += `<text x="162" y="${LY + 59}" dominant-baseline="central" fill="#f9a8d4" font-size="8.5" font-family="sans-serif">★  Módulo "Definición Rutina H/M": lógica idéntica para ambos géneros — ÚNICO diferenciador: &lt;&lt;extend&gt;&gt; adaptación ciclo menstrual y notificaciones (Solo Mujer)</text>`;
+
+    // IA exclude note
+    h += `<rect x="870" y="${LY + 50}" width="882" height="14" rx="2" fill="#0e0a1a" stroke="#7c3aed" stroke-width="0.4" stroke-opacity="0.5"/>`;
+    h += `<text x="878" y="${LY + 59}" dominant-baseline="central" fill="#c4b5fd" font-size="8.5" font-family="sans-serif">🤖  IA «exclude»: NO es actor interno del sistema — es un tercero externo. Las líneas punteadas (◇ - - -) indican dependencia condicional/opcional del módulo con la IA.</text>`;
+
+    h += `<text x="155" y="${LY + 88}" fill="#1a2235" font-size="8" font-family="sans-serif">OLYMPUS — App de Cultura Física Personalizada v4.0 — Diagrama de Casos de Uso</text>`;
+    svg.innerHTML = h;
+
+    let sc = 1;
+    const upd = () => { svg.setAttribute('width', Math.round(W * sc)); svg.setAttribute('height', Math.round(H * sc)); document.getElementById('bZL').textContent = Math.round(sc * 100) + '%'; };
+    document.getElementById('bZI').onclick = () => { sc = Math.min(3, sc * 1.3); upd(); };
+    document.getElementById('bZO').onclick = () => { sc = Math.max(0.25, sc / 1.3); upd(); };
+    document.getElementById('bZR').onclick = () => { sc = 1; upd(); };
+  </script>
+</body>
+
+</html>
