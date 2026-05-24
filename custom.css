@@ -1,10 +1,9 @@
 /* ============================================================
-   OLYMPUS — custom.css  (v2)
-   Cambios respecto a v1:
-   - Añadida animación bounce para scroll-hint-line
-   - Añadida clase reveal.d-6 → .d-4 ya existía, añadimos d-5 y d-6 correctamente
-   - Estilos para sección de ciclo menstrual
-   - active: states para feature cards (mobile)
+   OLYMPUS — custom.css  (v3)
+   Fixes v3:
+   - Imagen hero corregida en móvil (object-position, parallax off)
+   - Stats hero con gap reducido en móvil
+   - Padding hero ajustado en móvil
    ============================================================ */
 
 /* ── Variables ─────────────────────────────────────────── */
@@ -181,7 +180,7 @@ body {
   opacity: 0;
 }
 
-/* ── SCROLL HINT — FIX: animación bounce en la línea ─────── */
+/* ── SCROLL HINT ─────────────────────────────────────────── */
 .scroll-hint-line {
   animation: scrollBounce 2s ease-in-out infinite;
   transform-origin: top;
@@ -345,15 +344,12 @@ body {
   transform: scale(1.03);
 }
 
-/* ── CICLO MENSTRUAL — estilos de sección ───────────────── */
-
-/* Shimmer muy sutil en el fondo de cycle cards al hover */
+/* ── CICLO MENSTRUAL ─────────────────────────────────────── */
 .cycle-card {
   position: relative;
   transition: background-color 0.3s ease;
 }
 
-/* Línea de acento inferior rosa en las cycle cards al hover */
 .cycle-card::after {
   content: '';
   position: absolute;
@@ -393,7 +389,33 @@ body {
   background-size: 256px;
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   RESPONSIVE — MÓVIL
+   ════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
+
+  /* FIX 1: tamaño de texto del hero */
   .hero-line-inner { font-size: clamp(32px, 9vw, 52px) !important; }
+
+  /* FIX 2: imagen hero — posición centrada para mostrar bien la foto */
+  #hero-img {
+    object-position: center 20%;
+  }
+
+  /* FIX 3: desactiva el parallax en móvil
+     (el JS aplica transform via scroll; lo anulamos aquí para evitar
+      que la imagen se distorsione o se vea pixelada por el escalado) */
+  .hero-parallax {
+    will-change: auto;
+    transform: none !important;
+    /* Mantenemos solo la transición del zoom de carga */
+    transition: opacity 0.5s ease !important;
+  }
+
+  /* Excepción: el zoom de entrada (#hero-img.loaded) sigue funcionando
+     porque está controlado por la clase .loaded en el <style> del HTML,
+     que usa transform: scale(). Lo reseteamos solo después de que cargue. */
+  #hero-img.loaded {
+    transform: scale(1) !important;
+  }
 }
