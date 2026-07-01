@@ -1,9 +1,10 @@
 /* ============================================================
-   OLYMPUS — custom.css  (v3)
-   Fixes v3:
-   - Imagen hero corregida en móvil (object-position, parallax off)
-   - Stats hero con gap reducido en móvil
-   - Padding hero ajustado en móvil
+   OLYMPUS — custom.css  (v2)
+   Cambios respecto a v1:
+   - Añadida animación bounce para scroll-hint-line
+   - Añadida clase reveal.d-6 → .d-4 ya existía, añadimos d-5 y d-6 correctamente
+   - Estilos para sección de ciclo menstrual
+   - active: states para feature cards (mobile)
    ============================================================ */
 
 /* ── Variables ─────────────────────────────────────────── */
@@ -59,9 +60,10 @@ body {
 
 #main-nav.nav-scrolled {
   background: rgba(13, 13, 13, 0.95) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--line) !important;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-bottom: 1px solid rgba(64, 255, 249, 0.3) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(64, 255, 249, 0.1);
 }
 
 #main-nav.nav-hidden {
@@ -110,21 +112,6 @@ body {
 .hero-parallax {
   will-change: transform;
   transition: transform 0.05s linear;
-}
-
-/* ── HERO top accent line ───────────────────────────────── */
-.hero-accent-line {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: rgba(64, 255, 249, 0.6);
-  z-index: 5;
-  animation: lineReveal 1s var(--ease-expo) 3.2s both;
-}
-
-@keyframes lineReveal {
-  from { transform: scaleX(0); transform-origin: left; }
-  to   { transform: scaleX(1); }
 }
 
 /* ── SCROLL REVEALS ─────────────────────────────────────── */
@@ -180,7 +167,7 @@ body {
   opacity: 0;
 }
 
-/* ── SCROLL HINT ─────────────────────────────────────────── */
+/* ── SCROLL HINT — FIX: animación bounce en la línea ─────── */
 .scroll-hint-line {
   animation: scrollBounce 2s ease-in-out infinite;
   transform-origin: top;
@@ -344,12 +331,15 @@ body {
   transform: scale(1.03);
 }
 
-/* ── CICLO MENSTRUAL ─────────────────────────────────────── */
+/* ── CICLO MENSTRUAL — estilos de sección ───────────────── */
+
+/* Shimmer muy sutil en el fondo de cycle cards al hover */
 .cycle-card {
   position: relative;
   transition: background-color 0.3s ease;
 }
 
+/* Línea de acento inferior rosa en las cycle cards al hover */
 .cycle-card::after {
   content: '';
   position: absolute;
@@ -389,33 +379,294 @@ body {
   background-size: 256px;
 }
 
-/* ════════════════════════════════════════════════════════════
-   RESPONSIVE — MÓVIL
-   ════════════════════════════════════════════════════════════ */
+/* ── Cookie Banner (Bottom bar style) ───────────────────── */
+.cookie-banner {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 99999;
+  background: rgba(10, 10, 10, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(64, 255, 249, 0.2);
+  border-radius: 12px;
+  padding: 24px 16px;
+  animation: cookieSlideUp 0.5s var(--ease-expo);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cookie-banner.show {
+  display: block;
+}
+
+@keyframes cookieSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cookie-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .cookie-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+}
+
+.cookie-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cookie-link {
+  color: #40FFF9;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.cookie-link:hover {
+  color: #ffffff;
+}
+
+.cookie-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.cookie-btns button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 20px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-config {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-config:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 1);
+}
+
+.btn-reject {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-reject:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 1);
+}
+
+.btn-accept {
+  background: #40FFF9;
+  border-color: #40FFF9;
+  color: #0A0A0A;
+}
+
+.btn-accept:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  transform: scale(1.02);
+}
+
+/* ── Cookie Config Modal ───────────────────────────────── */
+.cookie-config-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: cookieModalFadeIn 0.3s var(--ease-expo);
+}
+
+.cookie-config-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+@keyframes cookieModalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cookie-config-content {
+  background: #0A0A0A;
+  border: 1px solid rgba(64, 255, 249, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  animation: cookieModalScaleIn 0.4s var(--ease-expo);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes cookieModalScaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.cookie-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cookie-config-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.cookie-config-close:hover {
+  color: #ffffff;
+}
+
+.cookie-config-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.cookie-option {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cookie-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cookie-option-info {
+  flex: 1;
+}
+
+.cookie-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.cookie-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.cookie-toggle input:checked + .toggle-slider {
+  background-color: #40FFF9;
+}
+
+.cookie-toggle input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.cookie-toggle.disabled {
+  background: transparent;
+}
+
+.cookie-toggle.disabled .toggle-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.cookie-config-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-save {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 24px;
+  background: #40FFF9;
+  border: 1px solid #40FFF9;
+  color: #0A0A0A;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-save:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  transform: scale(1.02);
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
-
-  /* FIX 1: tamaño de texto del hero */
   .hero-line-inner { font-size: clamp(32px, 9vw, 52px) !important; }
-
-  /* FIX 2: imagen hero — posición centrada para mostrar bien la foto */
-  #hero-img {
-    object-position: center 20%;
-  }
-
-  /* FIX 3: desactiva el parallax en móvil
-     (el JS aplica transform via scroll; lo anulamos aquí para evitar
-      que la imagen se distorsione o se vea pixelada por el escalado) */
-  .hero-parallax {
-    will-change: auto;
-    transform: none !important;
-    /* Mantenemos solo la transición del zoom de carga */
-    transition: opacity 0.5s ease !important;
-  }
-
-  /* Excepción: el zoom de entrada (#hero-img.loaded) sigue funcionando
-     porque está controlado por la clase .loaded en el <style> del HTML,
-     que usa transform: scale(). Lo reseteamos solo después de que cargue. */
-  #hero-img.loaded {
-    transform: scale(1) !important;
-  }
 }
